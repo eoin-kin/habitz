@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS habits (
   user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name            TEXT NOT NULL,
   description     TEXT,
-  color           TEXT NOT NULL DEFAULT '#4F46E5',
+  color           TEXT NOT NULL DEFAULT '#A05CD0',
   icon            TEXT NOT NULL DEFAULT '✅',
   frequency       TEXT NOT NULL DEFAULT 'daily'
                     CHECK (frequency IN ('daily', 'weekly', 'custom')),
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS joint_habits (
   id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name            TEXT NOT NULL,
   description     TEXT,
-  color           TEXT NOT NULL DEFAULT '#7C3AED',
+  color           TEXT NOT NULL DEFAULT '#A05CD0',
   icon            TEXT NOT NULL DEFAULT '🤝',
   frequency       TEXT NOT NULL DEFAULT 'daily'
                     CHECK (frequency IN ('daily', 'weekly', 'custom')),

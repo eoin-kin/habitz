@@ -42,6 +42,10 @@ export default function RootLayout() {
           options={{ presentation: 'modal', headerShown: true, title: 'New Habit' }}
         />
         <Stack.Screen
+          name="social/search"
+          options={{ presentation: 'modal', headerShown: true, title: 'Search Friends' }}
+        />
+        <Stack.Screen
           name="habit/[id]"
           options={{ headerShown: true, title: 'Habit Details' }}
         />

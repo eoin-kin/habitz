@@ -1,16 +1,17 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { colors } from '../lib/theme';
 
 const COLORS = [
-  '#4F46E5', // indigo
-  '#7C3AED', // violet
-  '#DB2777', // pink
-  '#E11D48', // rose
-  '#EA580C', // orange
-  '#D97706', // amber
-  '#059669', // emerald
-  '#0284C7', // sky
-  '#0D9488', // teal
-  '#64748B', // slate
+  colors.primary,        // primary purple
+  colors.primaryDark,    // darker purple
+  colors.primaryLight,   // lighter purple
+  colors.accent.green,   // green accent
+  colors.accent.pink,    // pink accent
+  '#EA580C',             // orange (keeping for variety)
+  '#059669',             // emerald (keeping for variety)
+  '#0284C7',             // sky blue (keeping for variety)
+  '#0D9488',             // teal (keeping for variety)
+  colors.dark.text.secondary, // neutral for subtle option
 ];
 
 type Props = {
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
   swatch: { width: 36, height: 36, borderRadius: 18 },
   swatchActive: {
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: colors.dark.text.primary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

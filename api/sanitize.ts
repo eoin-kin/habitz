@@ -112,7 +112,7 @@ export function sanitizeHabitInput(input: CreateHabitInput): CreateHabitInput {
     description: input.description
       ? sanitizeText(input.description, { maxLength: 200, allowNewlines: true }) || undefined
       : undefined,
-    color: isValidHexColor(input.color) ? input.color : '#4F46E5',
+    color: isValidHexColor(input.color) ? input.color : '#A05CD0',
     icon: sanitizeText(input.icon, { maxLength: 4 }) || '✅',
     frequency: VALID_FREQUENCIES.includes(input.frequency) ? input.frequency : 'daily',
     frequency_days: Array.isArray(input.frequency_days)

@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { HabitWithStats } from '../types';
+import { colors } from '../lib/theme';
 
 type Props = {
   habit: HabitWithStats;
@@ -40,10 +41,10 @@ export function HabitCard({ habit, onToggle, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.dark.bg.secondary,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.dark.border,
     flexDirection: 'row',
     overflow: 'hidden',
   },
@@ -58,14 +59,14 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 24 },
   info: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
-  streak: { fontSize: 12, color: '#EA580C', marginTop: 2 },
+  name: { fontSize: 15, fontWeight: '600', color: colors.dark.text.primary },
+  streak: { fontSize: 12, color: colors.accent.green, marginTop: 2 },
   checkBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: colors.dark.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

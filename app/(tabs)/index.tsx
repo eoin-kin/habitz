@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import { useHabitStore } from '../../store/habitStore';
 import { useSocialStore } from '../../store/socialStore';
+import { useAuthStore } from '../../store/authStore';
 import { HabitCard } from '../../components/HabitCard';
 import { HabitWithStats, Profile, FriendWithProfile } from '../../types';
 import { colors } from '../../lib/theme';
@@ -21,11 +22,16 @@ import { colors } from '../../lib/theme';
 export default function TodayScreen() {
   const router = useRouter();
   const { habits, loading, fetchHabits, toggleCompletion } = useHabitStore();
-  const { friends, loading: friendsLoading, fetchFriends, searchUsers } = useSocialStore();
+  const { session } = useAuthStore();
+  const { friends, loading: friendsLoading, fetchFriends, searchUsers, sendFriendRequest } = useSocialStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [requestMessage, setRequestMessage] = useState<string | null>(null);
+
+  const currentUserId = session?.user?.id;
 
   useEffect(() => {
     fetchHabits();
@@ -48,6 +54,22 @@ export default function TodayScreen() {
 
     return () => clearTimeout(timeout);
   }, [searchQuery, searchUsers]);
+
+  const getFriendRelation = (profileId: string) =>
+    friends.find((friend) => friend.friend_id === profileId);
+
+  const handleSendFriendRequest = async (profile: Profile) => {
+    setRequestMessage(null);
+    if (!profile.id) return;
+    setRequestingId(profile.id);
+    const error = await sendFriendRequest(profile.id);
+    setRequestingId(null);
+    if (error) {
+      setRequestMessage(error);
+      return;
+    }
+    setRequestMessage(`Friend request sent to ${profile.username}.`);
+  };
 
   const todayHabits = useMemo(
     () =>
@@ -118,30 +140,65 @@ export default function TodayScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="Find friends by username"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.dark.text.tertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
           />
+          {requestMessage ? <Text style={styles.requestMessage}>{requestMessage}</Text> : null}
           {searchQuery.length >= 2 && (
             <View style={styles.searchResults}>
               {searching ? (
                 <Text style={styles.searchStatus}>Searching...</Text>
               ) : searchResults.length ? (
-                searchResults.map((profile) => (
-                  <TouchableOpacity
-                    key={profile.id}
-                    style={styles.searchResultItem}
-                    onPress={() => {
-                      setSearchQuery(profile.username);
-                      setSearchResults([]);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.searchResultName}>{profile.display_name || profile.username}</Text>
-                    <Text style={styles.searchResultHandle}>@{profile.username}</Text>
-                  </TouchableOpacity>
-                ))
+                searchResults.map((profile) => {
+                  const relation = getFriendRelation(profile.id);
+                  const isCurrentUser = profile.id === currentUserId;
+                  const isSending = requestingId === profile.id;
+                  const isFriend = relation?.status === 'accepted';
+                  const isPendingOutgoing = relation?.status === 'pending' && relation.direction === 'outgoing';
+                  const isPendingIncoming = relation?.status === 'pending' && relation.direction === 'incoming';
+                  const buttonLabel = isCurrentUser
+                    ? 'This is you'
+                    : isFriend
+                    ? 'Friends'
+                    : isPendingOutgoing
+                    ? 'Request sent'
+                    : isPendingIncoming
+                    ? 'Incoming request'
+                    : 'Add friend';
+
+                  return (
+                    <View key={profile.id} style={styles.searchResultItem}>
+                      <TouchableOpacity
+                        style={styles.searchResultInfo}
+                        onPress={() => {
+                          setSearchQuery(profile.username);
+                          setSearchResults([]);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.searchResultName}>{profile.display_name || profile.username}</Text>
+                        <Text style={styles.searchResultHandle}>@{profile.username}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.addFriendBtn,
+                          (isFriend || isCurrentUser || isPendingIncoming || isPendingOutgoing) && styles.addFriendBtnDisabled,
+                        ]}
+                        onPress={() => handleSendFriendRequest(profile)}
+                        disabled={isFriend || isCurrentUser || isPendingIncoming || isPendingOutgoing || isSending}
+                      >
+                        {isSending ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <Text style={styles.addFriendBtnText}>{buttonLabel}</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
               ) : (
                 <Text style={styles.searchStatus}>No matches yet.</Text>
               )}
@@ -252,10 +309,38 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.dark.border,
+  },
+  searchResultInfo: { flex: 1, marginRight: 12 },
+  addFriendBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    minWidth: 98,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addFriendBtnDisabled: {
+    backgroundColor: colors.dark.bg.tertiary,
+  },
+  addFriendBtnText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  requestMessage: {
+    marginTop: 12,
+    marginBottom: 4,
+    color: colors.primaryLight,
+    fontSize: 13,
   },
   searchResultName: { fontSize: 15, fontWeight: '600', color: colors.dark.text.primary },
   searchResultHandle: { fontSize: 12, color: colors.dark.text.secondary, marginTop: 2 },
@@ -282,7 +367,7 @@ const styles = StyleSheet.create({
   },
   smallHabitIcon: { fontSize: 24, marginBottom: 10 },
   smallHabitName: { fontSize: 14, fontWeight: '700', color: colors.dark.text.primary },
-  smallHabitStreak: { fontSize: 12, color: '#EA580C', marginTop: 6 },
+  smallHabitStreak: { fontSize: 12, color: colors.accent.green, marginTop: 6 },
   emptyHeroBox: {
     minHeight: 100,
     borderRadius: 18,
@@ -293,7 +378,7 @@ const styles = StyleSheet.create({
   },
   emptyHeroText: { color: colors.dark.text.secondary, textAlign: 'center', fontSize: 13 },
   selectedStreakCard: {
-    backgroundColor: '#312E81',
+    backgroundColor: colors.primaryDark,
     borderRadius: 18,
     padding: 18,
   },
